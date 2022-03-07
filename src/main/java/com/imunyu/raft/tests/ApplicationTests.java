@@ -27,9 +27,8 @@ public class ApplicationTests {
         RpcExposer rpcExposer = new RpcExposer(8080);
         rpcExposer.addService(new Greeter());
         rpcExposer.start();
-        RpcClient clientManager = new RpcClient();
-        IGreeter greeter = clientManager.registerNode(IGreeter.class, "127.0.0.1:8080");
-
+        RpcClient rpcClient = new RpcClient();
+        IGreeter greeter = rpcClient.registerNode(IGreeter.class, "127.0.0.1:8080");
         boolean flag = true;
         long secs = 2;
         while (flag) {
@@ -45,6 +44,7 @@ public class ApplicationTests {
             }
         }
 
+        rpcClient.shutdown();
         rpcExposer.shutdown();
 
     }

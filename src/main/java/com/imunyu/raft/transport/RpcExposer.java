@@ -20,7 +20,7 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
     private static final Logger log = LoggerFactory.getLogger(RpcExposer.class);
     private static final int DEFAULT_PORT = 8080;
 
-    private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 100, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
 
     private final ServiceRegistry serviceRegistry = new ServiceRegistry();
@@ -110,8 +110,6 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
             } finally {
                 bossGroup.shutdownGracefully();
                 workerGroup.shutdownGracefully();
-
-
             }
         });
     }

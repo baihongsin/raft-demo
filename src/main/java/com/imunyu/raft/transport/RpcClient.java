@@ -22,7 +22,7 @@ public class RpcClient {
 
     private final RpcFuture<ChannelFuture> rpcFuture = new RpcFuture<>();
     private final Map<String, Set<String>> exposeList = new HashMap<>();
-    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(4, 8, 600, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000));
+    private final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(4, 100, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000));
 
     private final Map<String, RpcClientInvoker> invokers = new ConcurrentHashMap<>();
     private final Map<String, ChannelFuture> serverChannels = new ConcurrentHashMap<>();
@@ -168,6 +168,12 @@ public class RpcClient {
 
     public ChannelFuture sync() {
         return rpcFuture.get();
+    }
+
+    public void shutdown() {
+        ChannelFuture channelFuture = rpcFuture.get();
+        channelFuture.channel().eventLoop().shutdownGracefully();
+        threadPoolExecutor.shutdown();
     }
 
 }
