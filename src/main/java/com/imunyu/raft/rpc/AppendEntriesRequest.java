@@ -1,4 +1,4 @@
-package com.imunyu.raft.rpc.model;
+package com.imunyu.raft.rpc;
 
 public class AppendEntriesRequest {
 
