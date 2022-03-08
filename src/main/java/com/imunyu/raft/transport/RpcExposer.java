@@ -22,14 +22,11 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
 
     private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
-
     private final ServiceRegistry serviceRegistry = new ServiceRegistry();
-
+    private final RpcCodec rpcCodec = new RpcProtostuffCodec();
 
     private final String host;
     private final int port;
-
-    private RegistryConfig registryConfig;
 
     private final RpcFuture<ChannelFuture> startFuture = new RpcFuture<>();
 
@@ -40,11 +37,10 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
     @Override
     protected void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
-        RpcCodec rpcCodec = new RpcProtostuffCodec();
         pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, Beat.BEAT_TIMEOUT, TimeUnit.SECONDS));
         pipeline.addLast("encoder", new RpcEncoder(rpcCodec));
         pipeline.addLast("decoder", new RpcDecoder(rpcCodec));
-        pipeline.addLast("server", new RpcHandler(serviceRegistry));
+        pipeline.addLast("server", new RpcExposerHandler(serviceRegistry));
     }
 
     public RpcExposer(int port) {
@@ -56,18 +52,6 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
     public RpcExposer(String host, int port) {
         this.host = host;
         this.port = port;
-    }
-
-    public RpcExposer(int port, RegistryConfig registryConfig) {
-        this.host = getHost();
-        this.port = port;
-        this.registryConfig = registryConfig;
-    }
-
-    public RpcExposer(String host, int port, RegistryConfig registryConfig) {
-        this.host = host;
-        this.port = port;
-        this.registryConfig = registryConfig;
     }
 
     public String getHost() {
@@ -86,6 +70,7 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
 
 
     public void start() {
+        log.info("server start {}:{}", host, port);
         threadPool.execute(() -> {
             EventLoopGroup bossGroup = new NioEventLoopGroup();
             EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -97,8 +82,8 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true);
                 ChannelFuture channelFuture = bootstrap.bind(port).sync();
-                startFuture.done(channelFuture);
                 log.info("server bind port:{}", port);
+                startFuture.done(channelFuture);
                 channelFuture.addListener((ChannelFutureListener) listener -> {
                     boolean active = listener.channel().isActive();
                     log.info("active:" + active);
@@ -122,12 +107,5 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
         log.info("shutdown, {}:{}", host, port);
     }
 
-    public ServiceRegistry getServiceRegistry() {
-        return serviceRegistry;
-    }
-
-    public String serverKey() {
-        return host + ":" + port;
-    }
 
 }

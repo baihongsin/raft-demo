@@ -9,14 +9,14 @@ import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 
 
-public class RpcHandler extends ChannelInboundHandlerAdapter {
+public class RpcExposerHandler extends ChannelInboundHandlerAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RpcExposerHandler.class);
 
     private final ServiceRegistry serviceRegistry;
 
 
-    public RpcHandler(ServiceRegistry serviceRegistry) {
+    public RpcExposerHandler(ServiceRegistry serviceRegistry) {
         this.serviceRegistry = serviceRegistry;
     }
 

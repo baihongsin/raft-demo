@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RpcRpcClientHandler extends ChannelInboundHandlerAdapter implements RpcClientInvoker {
+public class RpcClientHandler extends ChannelInboundHandlerAdapter implements RpcClientInvoker {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcRpcClientHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RpcClientHandler.class);
 
     private final RpcClient clientManager;
 
@@ -23,7 +23,7 @@ public class RpcRpcClientHandler extends ChannelInboundHandlerAdapter implements
 
     private final AtomicLong atomicLong = new AtomicLong(1000);
 
-    public RpcRpcClientHandler(RpcClient clientManager, String serverKey) {
+    public RpcClientHandler(RpcClient clientManager, String serverKey) {
         this.clientManager = clientManager;
         this.serverKey = serverKey;
     }
@@ -79,8 +79,11 @@ public class RpcRpcClientHandler extends ChannelInboundHandlerAdapter implements
         request.setParams(parameters);
         try {
             log.debug("rpc request:{}", request);
+            long start = System.currentTimeMillis();
             RpcResponse rpcResponse = sendRequest(request);
+            log.info("cost mills: {}", System.currentTimeMillis() - start);
             log.debug("rpc response:{}", rpcResponse);
+
             return rpcResponse.getData();
         } catch (Exception e) {
             e.printStackTrace();

@@ -28,8 +28,10 @@ public class RpcClient {
     private final Map<String, ChannelFuture> serverChannels = new ConcurrentHashMap<>();
 
     private final Random random = new Random();
-    private String[] serverList = new String[]{};
+    private final RpcCodec rpcCodec = new RpcProtostuffCodec();
 
+
+    private String[] serverList = new String[]{};
     private boolean reconnected = false;
 
     public void setReconnected(boolean reconnected) {
@@ -132,11 +134,12 @@ public class RpcClient {
                             @Override
                             protected void initChannel(SocketChannel ch) {
                                 ChannelPipeline pipeline = ch.pipeline();
-                                RpcCodec rpcCodec = new RpcProtostuffCodec();
+
                                 pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, Beat.BEAT_TIMEOUT, TimeUnit.SECONDS));
                                 pipeline.addLast("encoder", new RpcEncoder(rpcCodec));
                                 pipeline.addLast("decoder", new RpcDecoder(rpcCodec));
-                                pipeline.addLast("client", new RpcRpcClientHandler(RpcClient.this, host + ":" + port));
+
+                                pipeline.addLast("client", new RpcClientHandler(RpcClient.this, host + ":" + port));
                             }
                         });
                 try {
