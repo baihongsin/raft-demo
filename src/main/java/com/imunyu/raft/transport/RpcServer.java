@@ -10,46 +10,47 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class RpcExposer extends ChannelInitializer<SocketChannel> {
+public class RpcServer extends ChannelInitializer<SocketChannel> {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcExposer.class);
+    private static final Logger log = LoggerFactory.getLogger(RpcServer.class);
     private static final int DEFAULT_PORT = 8080;
 
-    private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+    private final ThreadPoolExecutor threadPool =
+            new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
-    private final ServiceRegistry serviceRegistry = new ServiceRegistry();
+    private final RpcRegistry rpcRegistry = new RpcRegistry();
     private final RpcCodec rpcCodec = new RpcProtostuffCodec();
+    private final RpcFuture<ChannelFuture> startFuture = new RpcFuture<>();
 
     private final String host;
     private final int port;
 
-    private final RpcFuture<ChannelFuture> startFuture = new RpcFuture<>();
-
-    public RpcExposer() {
+    public RpcServer() {
         this(DEFAULT_PORT);
     }
 
     @Override
     protected void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
-        pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, Beat.BEAT_TIMEOUT, TimeUnit.SECONDS));
+        pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, RpcConst.BEAT_TIMEOUT, TimeUnit.SECONDS));
         pipeline.addLast("encoder", new RpcEncoder(rpcCodec));
         pipeline.addLast("decoder", new RpcDecoder(rpcCodec));
-        pipeline.addLast("server", new RpcExposerHandler(serviceRegistry));
+        pipeline.addLast("server", new RpcServerHandler(rpcRegistry));
     }
 
-    public RpcExposer(int port) {
+    public RpcServer(int port) {
         this.host = getHost();
         this.port = port;
     }
 
 
-    public RpcExposer(String host, int port) {
+    public RpcServer(String host, int port) {
         this.host = host;
         this.port = port;
     }
@@ -65,9 +66,8 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
     }
 
     public void addService(Object service) {
-        serviceRegistry.addService(service);
+        rpcRegistry.addService(service);
     }
-
 
     public void start() {
         log.info("server start {}:{}", host, port);
@@ -81,7 +81,9 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
                         .childHandler(this)
                         .option(ChannelOption.SO_BACKLOG, 128)
                         .childOption(ChannelOption.SO_KEEPALIVE, true);
-                ChannelFuture channelFuture = bootstrap.bind(port).sync();
+
+                InetSocketAddress socketAddress = new InetSocketAddress(host, port);
+                ChannelFuture channelFuture = bootstrap.bind(socketAddress).sync();
                 log.info("server bind port:{}", port);
                 startFuture.done(channelFuture);
                 channelFuture.addListener((ChannelFutureListener) listener -> {
@@ -89,7 +91,6 @@ public class RpcExposer extends ChannelInitializer<SocketChannel> {
                     log.info("active:" + active);
                 });
                 channelFuture.channel().closeFuture().sync();
-
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {

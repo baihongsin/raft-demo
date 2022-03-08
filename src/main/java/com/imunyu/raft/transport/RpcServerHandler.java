@@ -6,18 +6,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
 
 
-public class RpcExposerHandler extends ChannelInboundHandlerAdapter {
+public class RpcServerHandler extends ChannelInboundHandlerAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcExposerHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(RpcServerHandler.class);
 
-    private final ServiceRegistry serviceRegistry;
+    private final RpcRegistry rpcRegistry;
 
 
-    public RpcExposerHandler(ServiceRegistry serviceRegistry) {
-        this.serviceRegistry = serviceRegistry;
+    public RpcServerHandler(RpcRegistry rpcRegistry) {
+        this.rpcRegistry = rpcRegistry;
     }
 
     @Override
@@ -29,7 +28,7 @@ public class RpcExposerHandler extends ChannelInboundHandlerAdapter {
                 Object data = wrapper.getData();
                 RpcRequest request = (RpcRequest) data;
                 String methodName = request.getMethodName();
-                Object o = serviceRegistry.getService(request.getClassName());
+                Object o = rpcRegistry.getService(request.getClassName());
 
                 Object[] params = request.getParams();
                 Class<?>[] paramTypes = request.getParamTypes();
@@ -49,23 +48,6 @@ public class RpcExposerHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
-        InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-        String key = address.getAddress().getHostAddress() + ":" +  address.getPort();
-        ContextHolder.set(key);
-        serviceRegistry.register(key);
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
-        ContextHolder.remove();
-        InetSocketAddress address = (InetSocketAddress) ctx.channel().remoteAddress();
-        String key = address.getAddress().getHostAddress() + ":" + address.getPort();
-        serviceRegistry.unregister(key);
-    }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -74,10 +56,8 @@ public class RpcExposerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-
         log.error("exceptionCaught:" + cause.getMessage());
         cause.printStackTrace();
         ctx.close();
-        ContextHolder.remove();
     }
 }

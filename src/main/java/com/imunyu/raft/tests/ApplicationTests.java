@@ -2,7 +2,7 @@ package com.imunyu.raft.tests;
 
 
 import com.imunyu.raft.transport.RpcClient;
-import com.imunyu.raft.transport.RpcExposer;
+import com.imunyu.raft.transport.RpcServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,9 +24,9 @@ public class ApplicationTests {
 
     public static void main(String[] args) {
 
-        RpcExposer rpcExposer = new RpcExposer(8080);
-        rpcExposer.addService(new Greeter());
-        rpcExposer.start();
+        RpcServer rpcServer = new RpcServer(8080);
+        rpcServer.addService(new Greeter());
+        rpcServer.start();
         RpcClient rpcClient = new RpcClient();
         IGreeter greeter = rpcClient.registerNode(IGreeter.class, "127.0.0.1:8080");
         boolean flag = true;
@@ -45,7 +45,7 @@ public class ApplicationTests {
         }
 
         rpcClient.shutdown();
-        rpcExposer.shutdown();
+        rpcServer.shutdown();
 
     }
 

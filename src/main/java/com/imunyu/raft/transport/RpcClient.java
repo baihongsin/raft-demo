@@ -11,12 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
-public class RpcClient {
+public class RpcClient extends RpcConst {
 
     private final static Logger log = LoggerFactory.getLogger(RpcClient.class);
 
@@ -129,13 +126,12 @@ public class RpcClient {
                 Bootstrap bootstrap = new Bootstrap()
                         .group(loopGroup)
                         .channel(NioSocketChannel.class)
-                        .option(ChannelOption.TCP_NODELAY, true)
+//                        .option(ChannelOption.TCP_NODELAY, true)
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) {
                                 ChannelPipeline pipeline = ch.pipeline();
-
-                                pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, Beat.BEAT_TIMEOUT, TimeUnit.SECONDS));
+                                pipeline.addLast("heartbeat", new IdleStateHandler(0, 0, RpcConst.BEAT_TIMEOUT, TimeUnit.SECONDS));
                                 pipeline.addLast("encoder", new RpcEncoder(rpcCodec));
                                 pipeline.addLast("decoder", new RpcDecoder(rpcCodec));
 
@@ -143,8 +139,10 @@ public class RpcClient {
                             }
                         });
                 try {
-                    ChannelFuture channelFuture = bootstrap.connect(host, port).sync();
-                    log.info("client connected, {}:{}", host, port);
+                    long start = System.currentTimeMillis();
+                    ChannelFuture channelFuture = bootstrap.connect(host, port);
+                    channelFuture.sync();
+                    log.info("client connected2, {}:{}, cost:{}", host, port, System.currentTimeMillis() - start);
                     rpcFuture.done(channelFuture);
 
                     connected = true;
@@ -174,9 +172,19 @@ public class RpcClient {
     }
 
     public void shutdown() {
-        ChannelFuture channelFuture = rpcFuture.get();
-        channelFuture.channel().eventLoop().shutdownGracefully();
-        threadPoolExecutor.shutdown();
+        ChannelFuture channelFuture = null;
+        try {
+            channelFuture = rpcFuture.get(1,  TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (channelFuture != null) {
+            channelFuture.channel().eventLoop().shutdownGracefully();
+        }
+        if (!threadPoolExecutor.isShutdown()) {
+            threadPoolExecutor.shutdown();
+        }
+
     }
 
 }

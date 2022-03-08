@@ -66,6 +66,7 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
         channelFuture.await();
         if (!channelFuture.isSuccess()) {
             log.error("send request error");
+            requestFuture.done(null);
         }
         return (RpcResponse) requestFuture.get();
     }
@@ -83,7 +84,9 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
             RpcResponse rpcResponse = sendRequest(request);
             log.info("cost mills: {}", System.currentTimeMillis() - start);
             log.debug("rpc response:{}", rpcResponse);
-
+            if (rpcResponse == null) {
+                return null;
+            }
             return rpcResponse.getData();
         } catch (Exception e) {
             e.printStackTrace();
