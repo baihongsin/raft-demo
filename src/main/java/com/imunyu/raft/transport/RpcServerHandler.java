@@ -29,7 +29,6 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
                 RpcRequest request = (RpcRequest) data;
                 String methodName = request.getMethodName();
                 Object o = rpcRegistry.getService(request.getClassName());
-
                 Object[] params = request.getParams();
                 Class<?>[] paramTypes = request.getParamTypes();
                 Method method = o.getClass().getMethod(methodName, paramTypes);

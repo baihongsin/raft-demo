@@ -11,8 +11,10 @@ public class Raft {
     static RpcHandler rpcHandler = null;
     static  RpcClient rpcClient = null;
     public static void main(String[] args) {
+
         rpcClient = new RpcClient();
-        rpcHandler = rpcClient.registerNode(RpcHandler.class, "127.0.0.1:8080");
+        rpcHandler = rpcClient.createService(RpcHandler.class, "127.0.0.1:8080");
+        rpcHandler = rpcClient.createService(RpcHandler.class, "127.0.0.1:8081");
         rpcHandler.appendEntries(null);
         rpcHandler.requestVote(null);
         new Thread(() -> {
@@ -21,7 +23,8 @@ public class Raft {
                 String in = scanner.nextLine();
                 if ("1".equals(in)) {
                     rpcClient = new RpcClient();
-                    rpcHandler = rpcClient.registerNode(RpcHandler.class, "127.0.0.1:8080");
+                    rpcHandler = rpcClient.createService(RpcHandler.class, "127.0.0.1:8080");
+                    rpcHandler = rpcClient.createService(RpcHandler.class, "127.0.0.1:8081");
                     rpcHandler.appendEntries(null);
                     rpcHandler.requestVote(null);
                 } else if("2".equals(in)) {

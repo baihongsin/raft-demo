@@ -2,6 +2,7 @@ package com.imunyu.raft.transport;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public class RpcProxy implements InvocationHandler {
 
@@ -30,7 +31,12 @@ public class RpcProxy implements InvocationHandler {
         }
 
         Class<?>[] parameterTypes = method.getParameterTypes();
-        RpcClientInvoker invoker = clientManager.select();
+        String name = method.getDeclaringClass().getName();
+        List<String> serverList = clientManager.getServerList(name);
+        if (serverList == null) {
+            throw new RpcException("not found server for :#" + method.getName());
+        }
+        RpcClientInvoker invoker = clientManager.select(serverList);
         if (invoker == null) {
             throw new RpcException("not found invokers for :#" + method.getName());
         }

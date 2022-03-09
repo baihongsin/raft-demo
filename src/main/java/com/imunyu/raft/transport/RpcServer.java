@@ -1,5 +1,6 @@
 package com.imunyu.raft.transport;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -13,6 +14,7 @@ import java.net.Inet4Address;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -20,9 +22,9 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
 
     private static final Logger log = LoggerFactory.getLogger(RpcServer.class);
     private static final int DEFAULT_PORT = 8080;
-
+    private final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(RpcConst.SERVER_THREAD_POOL_NAME).build();
     private final ThreadPoolExecutor threadPool =
-            new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
+            new ThreadPoolExecutor(10, 100, 1, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), threadFactory);
 
     private final RpcRegistry rpcRegistry = new RpcRegistry();
     private final RpcCodec rpcCodec = new RpcProtostuffCodec();
@@ -72,8 +74,9 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
     public void start() {
         log.info("server start {}:{}", host, port);
         threadPool.execute(() -> {
-            EventLoopGroup bossGroup = new NioEventLoopGroup();
-            EventLoopGroup workerGroup = new NioEventLoopGroup();
+            EventLoopGroup bossGroup = new NioEventLoopGroup(threadFactory);
+            EventLoopGroup workerGroup = new NioEventLoopGroup(threadFactory);
+
             try {
                 ServerBootstrap bootstrap = new ServerBootstrap()
                         .group(bossGroup, workerGroup)

@@ -13,25 +13,33 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
 
     private static final Logger log = LoggerFactory.getLogger(RpcClientHandler.class);
 
-    private final RpcClient clientManager;
 
     private final ConcurrentHashMap<String, RpcFuture<Object>> rpcFutureMap = new ConcurrentHashMap<>();
 
     private ChannelHandlerContext handlerCtx;
 
-    private final String serverKey;
-
     private final AtomicLong atomicLong = new AtomicLong(1000);
 
-    public RpcClientHandler(RpcClient clientManager, String serverKey) {
-        this.clientManager = clientManager;
-        this.serverKey = serverKey;
+    private final String serviceKey;
+
+    private final RpcClient rpcClient;
+
+    public RpcClientHandler(String serviceKey, RpcClient rpcClient) {
+        this.serviceKey = serviceKey;
+        this.rpcClient = rpcClient;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         this.handlerCtx = ctx;
-        clientManager.addInvoker(serverKey, this);
+        rpcClient.addInvoker(serviceKey, this);
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        super.channelInactive(ctx);
+        rpcClient.removeInvoker(serviceKey);
+
     }
 
     @Override
@@ -62,11 +70,16 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
         wrapper.setData(request);
         RpcFuture<Object> requestFuture = new RpcFuture<>();
         rpcFutureMap.put(wrapper.getReqId(), requestFuture);
-        ChannelFuture channelFuture = handlerCtx.writeAndFlush(wrapper);
-        channelFuture.await();
-        if (!channelFuture.isSuccess()) {
-            log.error("send request error");
+        if (handlerCtx == null) {
+            log.error("handler context not init");
             requestFuture.done(null);
+        } else {
+            ChannelFuture channelFuture = handlerCtx.writeAndFlush(wrapper);
+            channelFuture.await();
+            if (!channelFuture.isSuccess()) {
+                log.error("send request error");
+                requestFuture.done(null);
+            }
         }
         return (RpcResponse) requestFuture.get();
     }
