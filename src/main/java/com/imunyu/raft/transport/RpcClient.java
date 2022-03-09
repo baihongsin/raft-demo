@@ -126,7 +126,7 @@ public class RpcClient extends RpcConst {
                 Bootstrap bootstrap = new Bootstrap()
                         .group(loopGroup)
                         .channel(NioSocketChannel.class)
-//                        .option(ChannelOption.TCP_NODELAY, true)
+                        .option(ChannelOption.TCP_NODELAY, true)
                         .handler(new ChannelInitializer<SocketChannel>() {
                             @Override
                             protected void initChannel(SocketChannel ch) {

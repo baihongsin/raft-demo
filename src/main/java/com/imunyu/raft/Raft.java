@@ -7,13 +7,14 @@ import java.util.Scanner;
 import java.util.concurrent.CountDownLatch;
 
 public class Raft {
+
     static RpcHandler rpcHandler = null;
     static  RpcClient rpcClient = null;
     public static void main(String[] args) {
-
-
-
-
+        rpcClient = new RpcClient();
+        rpcHandler = rpcClient.registerNode(RpcHandler.class, "127.0.0.1:8080");
+        rpcHandler.appendEntries(null);
+        rpcHandler.requestVote(null);
         new Thread(() -> {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNext()) {
@@ -31,7 +32,11 @@ public class Raft {
 
                 } else {
                     System.out.println(in);
-                    rpcClient.shutdown();
+                    if (rpcClient != null) {
+                        rpcClient.shutdown();
+                    }
+                    rpcHandler = null;
+                    rpcClient = null;
                 }
             }
         }).start();
