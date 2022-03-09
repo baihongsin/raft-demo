@@ -1,4 +1,4 @@
-package com.imunyu.raft.state;
+package com.imunyu.raft.model;
 
 public class VolatileState {
 

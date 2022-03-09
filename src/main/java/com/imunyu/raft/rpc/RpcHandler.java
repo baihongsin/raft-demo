@@ -4,6 +4,6 @@ public interface RpcHandler {
 
     AppendEntriesResponse appendEntries(AppendEntriesRequest request);
 
-    RequestVoteResponse requestVote(AppendEntriesRequest request);
+    RequestVoteResponse requestVote(RequestVoteRequest request);
 
 }
