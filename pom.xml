@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.imunyu</groupId>
+    <groupId>cn.munyu</groupId>
     <artifactId>raft-demo</artifactId>
     <version>1.0-SNAPSHOT</version>
 
@@ -17,6 +17,18 @@
         <protostuff.version>1.7.4</protostuff.version>
         <logback.version>1.2.3</logback.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.8.2</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -44,6 +56,12 @@
             <artifactId>logback-classic</artifactId>
             <version>${logback.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -61,7 +79,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>com.imunyu.raft.Raft</mainClass>
+                            <mainClass>cn.munyu.raft.Raft</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
