@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -51,11 +52,20 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
         this.port = port;
     }
 
-
     public RpcServer(String host, int port) {
         this.host = host;
         this.port = port;
     }
+
+    public RpcServer(String address) {
+        if (address == null || address.length() == 0) {
+            throw new RpcException("address cannot null");
+        }
+        String[] socketAddr = address.split(":");
+        host = socketAddr[0];
+        port = Integer.parseInt(socketAddr[1]);
+    }
+
 
     public String getHost() {
         String host;
@@ -72,7 +82,6 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
     }
 
     public void start() {
-        log.info("server start {}:{}", host, port);
         threadPool.execute(() -> {
             EventLoopGroup bossGroup = new NioEventLoopGroup(threadFactory);
             EventLoopGroup workerGroup = new NioEventLoopGroup(threadFactory);

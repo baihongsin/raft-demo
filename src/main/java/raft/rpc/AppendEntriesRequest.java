@@ -1,5 +1,6 @@
 package raft.rpc;
 
+import raft.Node;
 import raft.model.Log;
 
 public class AppendEntriesRequest {
@@ -12,7 +13,7 @@ public class AppendEntriesRequest {
     /**
      * 领导人id
      */
-    private long leaderId;
+    private Node leader;
 
     private long prevLogIndex;
 
@@ -31,12 +32,12 @@ public class AppendEntriesRequest {
         this.term = term;
     }
 
-    public long getLeaderId() {
-        return leaderId;
+    public Node getLeader() {
+        return leader;
     }
 
-    public void setLeaderId(long leaderId) {
-        this.leaderId = leaderId;
+    public void setLeader(Node leader) {
+        this.leader = leader;
     }
 
     public long getPrevLogIndex() {

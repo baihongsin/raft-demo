@@ -13,7 +13,6 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
 
     private static final Logger log = LoggerFactory.getLogger(RpcClientHandler.class);
 
-
     private final ConcurrentHashMap<String, RpcFuture<Object>> rpcFutureMap = new ConcurrentHashMap<>();
 
     private ChannelHandlerContext handlerCtx;
@@ -95,7 +94,7 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
             log.debug("rpc request:{}", request);
             long start = System.currentTimeMillis();
             RpcResponse rpcResponse = sendRequest(request);
-            log.info("cost mills: {}", System.currentTimeMillis() - start);
+            log.debug("cost mills: {}", System.currentTimeMillis() - start);
             log.debug("rpc response:{}", rpcResponse);
             if (rpcResponse == null) {
                 return null;

@@ -1,8 +1,10 @@
-package raft.model;
+package raft;
 
-import raft.NodeState;
+import raft.model.Log;
 
-public class State {
+public class RaftState {
+
+    private String address;
 
     private String id;
 
@@ -13,6 +15,17 @@ public class State {
     private Integer votedFor = null;
 
     private Log[] entries;
+
+    private Node leader;
+
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
     public String getId() {
         return id;
@@ -52,5 +65,13 @@ public class State {
 
     public void setEntries(Log[] entries) {
         this.entries = entries;
+    }
+
+    public Node getLeader() {
+        return leader;
+    }
+
+    public void setLeader(Node leader) {
+        this.leader = leader;
     }
 }
