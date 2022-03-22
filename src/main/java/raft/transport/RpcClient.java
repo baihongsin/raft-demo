@@ -19,7 +19,7 @@ import java.util.concurrent.*;
  */
 public class RpcClient {
 
-    private final static Logger log = LoggerFactory.getLogger(RpcClient.class);
+    private final static Logger logger = LoggerFactory.getLogger(RpcClient.class);
 
     private final RpcFuture<ChannelFuture> rpcFuture = new RpcFuture<>();
     private final Map<String, List<String>> exposeList = new HashMap<>();
@@ -38,12 +38,10 @@ public class RpcClient {
 
     public void addInvoker(String serverKey, RpcClientInvoker invoker) {
         invokers.put(serverKey, invoker);
-        log.info("invoker register, {}", serverKey);
     }
 
     public void removeInvoker(String serverKey) {
         invokers.remove(serverKey);
-        log.info("invoker unregister, {}", serverKey);
     }
 
 
@@ -157,14 +155,14 @@ public class RpcClient {
                 long start = System.currentTimeMillis();
                 ChannelFuture channelFuture = bootstrap.connect(host, port);
                 channelFuture.sync();
-                log.info("client connected, {}, cost:{}", addrKey, System.currentTimeMillis() - start);
+                logger.info("client connected, {}, cost:{}", addrKey, System.currentTimeMillis() - start);
                 rpcFuture.done(channelFuture);
                 channelFuture.channel().closeFuture().sync();
-                log.info("client disconnected, {}", addrKey);
+                logger.info("client disconnected, {}", addrKey);
             } catch (Exception e) {
-                log.error("{}", e.getMessage());
+                logger.error("{}", e.getMessage());
             } finally {
-                log.info("client shutdown, {}", addrKey);
+                logger.info("client shutdown, {}", addrKey);
                 loopGroup.shutdownGracefully();
             }
 

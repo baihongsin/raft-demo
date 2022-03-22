@@ -44,7 +44,7 @@ public class LeaderTask extends StateTask implements Runnable {
                     rpcHandler.appendEntries(request);
                 }
                 try {
-                    delayLock.delay(raft.getConfig().getHeartbeatTimeout() + 500, TimeUnit.MILLISECONDS);
+                    delayLock.delay(raft.getConfig().getHeartbeatTimeout(), TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

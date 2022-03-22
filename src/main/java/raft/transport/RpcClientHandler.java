@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class RpcClientHandler extends ChannelInboundHandlerAdapter implements RpcClientInvoker {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcClientHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcClientHandler.class);
 
     private final ConcurrentHashMap<String, RpcFuture<Object>> rpcFutureMap = new ConcurrentHashMap<>();
 
@@ -70,13 +70,13 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
         RpcFuture<Object> requestFuture = new RpcFuture<>();
         rpcFutureMap.put(wrapper.getReqId(), requestFuture);
         if (handlerCtx == null) {
-            log.error("handler context not init");
+            logger.error("handler context not init");
             requestFuture.done(null);
         } else {
             ChannelFuture channelFuture = handlerCtx.writeAndFlush(wrapper);
             channelFuture.await();
             if (!channelFuture.isSuccess()) {
-                log.error("send request error");
+                logger.error("send request error");
                 requestFuture.done(null);
             }
         }
@@ -91,11 +91,11 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
         request.setParamTypes(parameterTypes);
         request.setParams(parameters);
         try {
-            log.debug("rpc request:{}", request);
+            logger.debug("rpc request:{}", request);
             long start = System.currentTimeMillis();
             RpcResponse rpcResponse = sendRequest(request);
-            log.debug("cost mills: {}", System.currentTimeMillis() - start);
-            log.debug("rpc response:{}", rpcResponse);
+            logger.debug("cost mills: {}", System.currentTimeMillis() - start);
+            logger.debug("rpc response:{}", rpcResponse);
             if (rpcResponse == null) {
                 return null;
             }

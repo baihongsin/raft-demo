@@ -7,16 +7,11 @@ import raft.NodeState;
 import raft.Raft;
 import raft.Utils;
 
-import java.util.Queue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class FollowerTask extends StateTask implements Runnable {
 
-    private static final Logger log = LoggerFactory.getLogger(FollowerTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(FollowerTask.class);
 
     private final Raft raft;
     private final long heartbeatTimeout;
@@ -50,12 +45,12 @@ public class FollowerTask extends StateTask implements Runnable {
                 }
                 long delayTime = System.currentTimeMillis() - raft.getLastContact();
                 if (delayTime > hbTimeout) {
-                    log.info("raft follower timeout {}ms", System.currentTimeMillis() - raft.getLastContact());
+                    logger.info("raft follower timeout {}ms", System.currentTimeMillis() - raft.getLastContact());
                     break;
                 }
                 hbTimeout = heartbeatTimeout + Utils.randomTimeout(heartbeatTimeout);
                 delayLock.delay(hbTimeout, TimeUnit.MILLISECONDS);
-                log.info("raft follower waited for {}ms", hbTimeout);
+                logger.info("raft follower waited for {}ms", hbTimeout);
 
             }
             // 随机心跳超时变为候选者

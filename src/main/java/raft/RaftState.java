@@ -16,6 +16,8 @@ public class RaftState {
 
     private Log[] entries;
 
+    private int index = 0;
+
     private Node leader;
 
 
@@ -73,5 +75,13 @@ public class RaftState {
 
     public void setLeader(Node leader) {
         this.leader = leader;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }

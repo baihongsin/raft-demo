@@ -1,7 +1,6 @@
 package raft.model;
 
 public class LogType {
-
     /**
      * 应用在状态机
      */

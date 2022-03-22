@@ -8,7 +8,7 @@ import java.util.*;
 
 public class RpcRegistry {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcRegistry.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcRegistry.class);
 
     private final Map<String, Object> serviceMap = new HashMap<>();
 
@@ -16,7 +16,7 @@ public class RpcRegistry {
         Class<?>[] interfaces = service.getClass().getInterfaces();
         for (Class<?> c : interfaces) {
             serviceMap.put(c.getName(), service);
-            log.debug("added service:{}", c.getName());
+            logger.debug("added service:{}", c.getName());
         }
     }
 

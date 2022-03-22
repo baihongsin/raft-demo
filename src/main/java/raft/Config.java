@@ -12,6 +12,8 @@ public class Config {
 
     private long leaderLeaseTimeout = 500;
 
+    private int entriesLength = 65535;
+
     public static Config defaultConfig() {
         return new Config();
     }
@@ -54,5 +56,13 @@ public class Config {
 
     public void setLeaderLeaseTimeout(long leaderLeaseTimeout) {
         this.leaderLeaseTimeout = leaderLeaseTimeout;
+    }
+
+    public int getEntriesLength() {
+        return entriesLength;
+    }
+
+    public void setEntriesLength(int entriesLength) {
+        this.entriesLength = entriesLength;
     }
 }

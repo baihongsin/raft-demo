@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RpcServer extends ChannelInitializer<SocketChannel> {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcServer.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcServer.class);
     private static final int DEFAULT_PORT = 8080;
     private final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(RpcConst.SERVER_THREAD_POOL_NAME).build();
     private final ThreadPoolExecutor threadPool =
@@ -96,7 +95,7 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
 
                 InetSocketAddress socketAddress = new InetSocketAddress(host, port);
                 ChannelFuture channelFuture = bootstrap.bind(socketAddress).sync();
-                log.info("server bind port:{}", port);
+                logger.info("server bind port:{}", port);
                 startFuture.done(channelFuture);
                 channelFuture.channel().closeFuture().sync();
             } catch (InterruptedException e) {
@@ -113,7 +112,7 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
         ChannelFuture channelFuture = startFuture.get();
         channelFuture.channel().eventLoop().shutdownGracefully();
         threadPool.shutdown();
-        log.info("shutdown, {}:{}", host, port);
+        logger.info("shutdown, {}:{}", host, port);
     }
 
 

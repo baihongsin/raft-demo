@@ -3,6 +3,8 @@ package raft;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import raft.model.Log;
+import raft.model.LogType;
 import raft.rpc.*;
 import raft.task.CandidateTask;
 import raft.task.FollowerTask;
@@ -10,6 +12,7 @@ import raft.task.LeaderTask;
 import raft.task.StateTask;
 import raft.transport.RpcServer;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class Raft extends RaftState implements Runnable, RpcHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(Raft.class);
+    private static final Logger logger = LoggerFactory.getLogger(Raft.class);
     private static final String THREAD_POOL_NAME = "raft";
     private final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(THREAD_POOL_NAME).build();
 
@@ -40,8 +43,11 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
 
     private final List<StateTask> taskList = new ArrayList<>();
 
-    public Raft(Config config) {
+    private final FSM fsm;
+
+    public Raft(Config config, FSM fsm) {
         this.config = config;
+        this.fsm = fsm;
         this.nodes = new ArrayList<>();
     }
 
@@ -50,15 +56,17 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
     }
 
     public static Raft newInstance() {
-        Raft raft = new Raft(Config.defaultConfig());
+        Config config = Config.defaultConfig();
+        Raft raft = new Raft(config, new StableFSM());
+
+        raft.setEntries(new Log[config.getEntriesLength()]);
         raft.setId(generateId());
         return raft;
     }
 
     public void start() {
-        log.info("server id:{}", getId());
+        logger.info("server id:{}", getId());
         threadPoolExecutor.execute(this);
-        threadPoolExecutor.execute(this::runFSM);
         threadPoolExecutor.execute(this::runSnapshots);
     }
 
@@ -75,14 +83,6 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
         runCandidate();
     }
 
-
-    /**
-     * 运行状态机
-     */
-    void runFSM() {
-
-
-    }
 
     /**
      * 定时快照
@@ -119,10 +119,33 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
         taskList.add(leaderTask);
     }
 
+    public void pushCommand(String content) {
+        Log log = new Log();
+        log.setData(content.getBytes(StandardCharsets.UTF_8));
+        log.setAppendedAt(System.currentTimeMillis());
+        log.setType(LogType.LogCommand);
+        log.setTerm(getCurrentTerm());
+        log.setIndex(getIndex());
+        fsm.apply(log);
+
+        List<Node> nodes = getNodes();
+        for (Node node : nodes) {
+            RpcHandler rpcHandler = node.getRpcHandler();
+
+            AppendEntriesRequest request = new AppendEntriesRequest();
+            request.setTerm(getCurrentTerm());
+            request.setEntries(new Log[]{log});
+            AppendEntriesResponse response = rpcHandler.appendEntries(request);
+
+
+        }
+
+    }
+
 
     @Override
     public AppendEntriesResponse appendEntries(AppendEntriesRequest request) {
-        log.info("{}-{} append entries", getId(), getState());
+        logger.info("{}-{} append entries", getId(), getState());
         AppendEntriesResponse response = new AppendEntriesResponse();
         response.setSuccess(false);
         response.setTerm(getCurrentTerm());
@@ -130,11 +153,22 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
             return response;
         }
 
+
         if (request.getTerm() > getCurrentTerm() || getState() != NodeState.FOLLOWER) {
             setState(NodeState.FOLLOWER);
             setCurrentTerm(request.getTerm());
             response.setTerm(request.getTerm());
         }
+
+        Log[] entries = request.getEntries();
+        if (entries != null) {
+            for (Log log : entries) {
+                if (fsm != null) {
+                    fsm.apply(log);
+                }
+            }
+        }
+
         setState(NodeState.FOLLOWER);
         setLeader(request.getLeader());
         setLastContact();
@@ -143,7 +177,7 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
 
     @Override
     public RequestVoteResponse requestVote(RequestVoteRequest request) {
-        log.info("{}-{} request vote, {}", getId(), getState(), request);
+        logger.info("{}-{} request vote, {}", getId(), getState(), request);
 
 
         return null;
@@ -188,7 +222,7 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
             stateTask.putState(state);
         }
 
-        log.info("state change:{}, id:{}", state, getId());
+        logger.info("state change:{}, id:{}", state, getId());
 
     }
 }

@@ -10,7 +10,7 @@ import raft.rpc.RpcHandler;
 
 public class CandidateTask extends StateTask implements Runnable {
 
-    private static final Logger log = LoggerFactory.getLogger(CandidateTask.class);
+    private static final Logger logger = LoggerFactory.getLogger(CandidateTask.class);
 
     private final Raft raft;
 
@@ -32,7 +32,7 @@ public class CandidateTask extends StateTask implements Runnable {
     }
 
     private void stateProcess() {
-        log.info("cur node change:{}", raft.getState().name());
+        logger.info("cur node change:{}", raft.getState().name());
         for (Node node : raft.getNodes()) {
             RequestVoteRequest request = new RequestVoteRequest();
             request.setCandidateId(raft.getId());

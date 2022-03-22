@@ -10,7 +10,7 @@ import java.lang.reflect.Method;
 
 public class RpcServerHandler extends ChannelInboundHandlerAdapter {
 
-    private static final Logger log = LoggerFactory.getLogger(RpcServerHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcServerHandler.class);
 
     private final RpcRegistry rpcRegistry;
 
@@ -55,7 +55,7 @@ public class RpcServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("exceptionCaught:" + cause.getMessage());
+        logger.error("exceptionCaught:" + cause.getMessage());
         cause.printStackTrace();
         ctx.close();
     }
