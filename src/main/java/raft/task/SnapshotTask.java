@@ -1,5 +1,12 @@
 package raft.task;
 
-public class SnapshotTask {
+import java.util.TimerTask;
 
+public class SnapshotTask extends TimerTask {
+
+    @Override
+    public void run() {
+
+
+    }
 }

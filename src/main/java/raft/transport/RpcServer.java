@@ -98,10 +98,6 @@ public class RpcServer extends ChannelInitializer<SocketChannel> {
                 ChannelFuture channelFuture = bootstrap.bind(socketAddress).sync();
                 log.info("server bind port:{}", port);
                 startFuture.done(channelFuture);
-                channelFuture.addListener((ChannelFutureListener) listener -> {
-                    boolean active = listener.channel().isActive();
-                    log.info("active:" + active);
-                });
                 channelFuture.channel().closeFuture().sync();
             } catch (InterruptedException e) {
                 e.printStackTrace();

@@ -4,17 +4,16 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import raft.rpc.*;
+import raft.task.CandidateTask;
 import raft.task.FollowerTask;
 import raft.task.LeaderTask;
+import raft.task.StateTask;
 import raft.transport.RpcServer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 
@@ -32,14 +31,14 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
 
     private final List<Node> nodes;
 
-
-
     /**
      * 最后一次和领导者联系的时间
      */
     private long lastContact = System.currentTimeMillis();
 
     private final ReentrantLock lastContactLock = new ReentrantLock();
+
+    private final List<StateTask> taskList = new ArrayList<>();
 
     public Raft(Config config) {
         this.config = config;
@@ -67,35 +66,21 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
      * 主要运行逻辑
      */
     public void run() {
-
         String address = getAddress();
         RpcServer rpcServer = new RpcServer(address);
         rpcServer.addService(this);
         rpcServer.start();
-
-        NodeState state = getState();
-        switch (state) {
-            case FOLLOWER:
-                runFollower();
-                break;
-            case LEADER:
-                runLeader();
-                break;
-            case CANDIDATE:
-                runCandidate();
-                break;
-            case SHUTDOWN:
-                break;
-            default:
-                log.error("known state:{}", state);
-        }
-
+        runLeader();
+        runFollower();
+        runCandidate();
     }
+
 
     /**
      * 运行状态机
      */
     void runFSM() {
+
 
     }
 
@@ -110,19 +95,18 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
      * 跟随者状态
      */
     void runFollower() {
-        threadPoolExecutor.execute(new FollowerTask(this));
+        FollowerTask followerTask = new FollowerTask(this);
+        threadPoolExecutor.execute(followerTask);
+        taskList.add(followerTask);
     }
-
-
-
-
-
 
     /**
      * 候选人状态
      */
     void runCandidate() {
-
+        CandidateTask candidateTask = new CandidateTask(this);
+        threadPoolExecutor.execute(candidateTask);
+        taskList.add(candidateTask);
     }
 
     /**
@@ -130,16 +114,15 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
      */
     void runLeader() {
         setLastContact();
-        if (getState() == NodeState.LEADER) {
-            threadPoolExecutor.execute(new LeaderTask(this));
-        }
-
+        LeaderTask leaderTask = new LeaderTask(this);
+        threadPoolExecutor.execute(leaderTask);
+        taskList.add(leaderTask);
     }
 
 
     @Override
     public AppendEntriesResponse appendEntries(AppendEntriesRequest request) {
-        log.info("{}-{} recv request", getId(), getState());
+        log.info("{}-{} append entries", getId(), getState());
         AppendEntriesResponse response = new AppendEntriesResponse();
         response.setSuccess(false);
         response.setTerm(getCurrentTerm());
@@ -152,7 +135,7 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
             setCurrentTerm(request.getTerm());
             response.setTerm(request.getTerm());
         }
-
+        setState(NodeState.FOLLOWER);
         setLeader(request.getLeader());
         setLastContact();
         return response;
@@ -160,11 +143,16 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
 
     @Override
     public RequestVoteResponse requestVote(RequestVoteRequest request) {
+        log.info("{}-{} request vote, {}", getId(), getState(), request);
+
+
         return null;
     }
 
     @Override
     public InstallSnapshotResponse installSnapshot(InstallSnapshotRequest request) {
+
+
         return null;
     }
 
@@ -192,10 +180,15 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
         return config;
     }
 
-    public ThreadPoolExecutor getThreadPoolExecutor() {
-        return threadPoolExecutor;
+
+    @Override
+    public void setState(NodeState state) {
+        super.setState(state);
+        for (StateTask stateTask : taskList) {
+            stateTask.putState(state);
+        }
+
+        log.info("state change:{}, id:{}", state, getId());
+
     }
-
-
-
 }

@@ -35,7 +35,9 @@ public class ExampleTests {
                 raft1.addPeer(new Node(raft2.getId(), raft2.getAddress()));
             }
         }
-
         new CountDownLatch(1).await();
     }
+
+
+
 }
