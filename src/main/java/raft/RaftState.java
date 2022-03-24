@@ -20,6 +20,17 @@ public class RaftState {
 
     private Node leader;
 
+    // 缓存最近的快照索引和任期
+    private long lastSnapshotIndex;
+
+    private long lastSnapshotTerm;
+
+    // 缓存最近日志的索引和任期
+
+    private long lastLogIndex;
+
+    private long lastLogTerm;
+
 
     public String getAddress() {
         return address;
@@ -83,5 +94,37 @@ public class RaftState {
 
     public void setIndex(int index) {
         this.index = index;
+    }
+
+    public long getLastSnapshotIndex() {
+        return lastSnapshotIndex;
+    }
+
+    public void setLastSnapshotIndex(long lastSnapshotIndex) {
+        this.lastSnapshotIndex = lastSnapshotIndex;
+    }
+
+    public long getLastSnapshotTerm() {
+        return lastSnapshotTerm;
+    }
+
+    public void setLastSnapshotTerm(long lastSnapshotTerm) {
+        this.lastSnapshotTerm = lastSnapshotTerm;
+    }
+
+    public long getLastLogIndex() {
+        return lastLogIndex;
+    }
+
+    public void setLastLogIndex(long lastLogIndex) {
+        this.lastLogIndex = lastLogIndex;
+    }
+
+    public long getLastLogTerm() {
+        return lastLogTerm;
+    }
+
+    public void setLastLogTerm(long lastLogTerm) {
+        this.lastLogTerm = lastLogTerm;
     }
 }

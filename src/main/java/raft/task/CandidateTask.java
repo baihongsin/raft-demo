@@ -6,7 +6,11 @@ import raft.Node;
 import raft.NodeState;
 import raft.Raft;
 import raft.rpc.RequestVoteRequest;
+import raft.rpc.RequestVoteResponse;
 import raft.rpc.RpcHandler;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public class CandidateTask extends StateTask implements Runnable {
 
@@ -14,6 +18,10 @@ public class CandidateTask extends StateTask implements Runnable {
 
     private final Raft raft;
 
+    private static class VoteInternal {
+        public int voteGranted = 0;
+        public int voteNeeded = 0;
+    }
 
     public CandidateTask(Raft raft) {
         this.raft = raft;
@@ -32,15 +40,41 @@ public class CandidateTask extends StateTask implements Runnable {
     }
 
     private void stateProcess() {
+        // 自增当前任期
+        raft.setCurrentTerm(raft.getCurrentTerm() + 1);
         logger.info("cur node change:{}", raft.getState().name());
+        VoteInternal voteInternal = new VoteInternal();
+        // 给自己投票
+        voteInternal.voteGranted = 1;
+        voteInternal.voteNeeded = raft.quorumSize();
+        // 请求各个节点
         for (Node node : raft.getNodes()) {
-            RequestVoteRequest request = new RequestVoteRequest();
-            request.setCandidateId(raft.getId());
-            request.setTerm(raft.getCurrentTerm());
-            request.setLastLogIndex(1);
-            request.setLastLogTerm(1);
-            RpcHandler rpcHandler = node.getRpcHandler();
-            rpcHandler.requestVote(request);
+            raft.getThreadPoolExecutor().execute(() -> requestVote(node, voteInternal));
+        }
+    }
+
+    private void requestVote(Node node, VoteInternal voteInternal) {
+        RequestVoteRequest request = new RequestVoteRequest();
+        request.setCandidateId(raft.getId());
+        request.setTerm(raft.getCurrentTerm());
+        request.setLastLogIndex(raft.getLastLogIndex());
+        request.setLastLogTerm(raft.getLastLogTerm());
+        RpcHandler rpcHandler = node.getRpcHandler();
+        RequestVoteResponse resp = rpcHandler.requestVote(request);
+
+        long term = resp.getTerm();
+        if (term > raft.getCurrentTerm()) {
+            raft.setState(NodeState.FOLLOWER);
+            raft.setCurrentTerm(term);
+            return;
+        }
+        boolean voteGranted = resp.isVoteGranted();
+        if (voteGranted) {
+            voteInternal.voteGranted ++;
+        }
+        if (voteInternal.voteGranted > voteInternal.voteNeeded) {
+            raft.setState(NodeState.LEADER);
+            raft.setLeader(node);
         }
     }
 }

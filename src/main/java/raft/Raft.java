@@ -27,7 +27,7 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
     private final ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat(THREAD_POOL_NAME).build();
 
     private final ThreadPoolExecutor threadPoolExecutor
-            = new ThreadPoolExecutor(4, 20, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), threadFactory);
+            = new ThreadPoolExecutor(16, 1000, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(1000), threadFactory);
 
 
     private final Config config;
@@ -67,7 +67,6 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
     public void start() {
         logger.info("server id:{}", getId());
         threadPoolExecutor.execute(this);
-        threadPoolExecutor.execute(this::runSnapshots);
     }
 
     /**
@@ -84,12 +83,6 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
     }
 
 
-    /**
-     * 定时快照
-     */
-    void runSnapshots() {
-
-    }
 
     /**
      * 跟随者状态
@@ -178,9 +171,22 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
     @Override
     public RequestVoteResponse requestVote(RequestVoteRequest request) {
         logger.info("{}-{} request vote, {}", getId(), getState(), request);
+        RequestVoteResponse resp = new RequestVoteResponse();
+        resp.setVoteGranted(false);
+        resp.setTerm(getCurrentTerm());
+        if (request.getTerm() < getCurrentTerm()) {
+            return resp;
+        }
+        if (request.getTerm() > getCurrentTerm()) {
+            setState(NodeState.FOLLOWER);
+            setCurrentTerm(request.getTerm());
+            resp.setTerm(request.getTerm());
+        }
 
+        
 
-        return null;
+        setLastContact();
+        return resp;
     }
 
     @Override
@@ -224,5 +230,13 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
 
         logger.info("state change:{}, id:{}", state, getId());
 
+    }
+
+    public ThreadPoolExecutor getThreadPoolExecutor() {
+        return threadPoolExecutor;
+    }
+
+    public int quorumSize() {
+        return nodes.size() / 2 + 1;
     }
 }
