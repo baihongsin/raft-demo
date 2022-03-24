@@ -183,7 +183,7 @@ public class Raft extends RaftState implements Runnable, RpcHandler {
             resp.setTerm(request.getTerm());
         }
 
-        
+
 
         setLastContact();
         return resp;
