@@ -11,6 +11,7 @@ public class StableFSM implements FSM {
     @Override
     public boolean apply(Log log) {
         logger.info("fsm apply log {}", log);
+
         return false;
     }
 

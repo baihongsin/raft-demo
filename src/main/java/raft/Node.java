@@ -1,15 +1,10 @@
 package raft;
 
-import raft.rpc.RpcHandler;
-import raft.transport.RpcClient;
-
 public class Node {
 
     private String serverId;
 
     private String address;
-
-    private RpcHandler rpcHandler;
 
     public Node(String serverId, String address) {
         this.serverId = serverId;
@@ -32,12 +27,11 @@ public class Node {
         this.address = address;
     }
 
-    public RpcHandler getRpcHandler() {
-        if (rpcHandler == null) {
-            RpcClient rpcClient = new RpcClient();
-            rpcHandler = rpcClient.createService(RpcHandler.class, getAddress());
-        }
-        return rpcHandler;
+    @Override
+    public String toString() {
+        return "Node{" +
+                "serverId='" + serverId + '\'' +
+                ", address='" + address + '\'' +
+                '}';
     }
-
 }

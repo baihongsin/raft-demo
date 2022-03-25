@@ -10,7 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public abstract class StateTask {
 
-    private static final BlockingQueue<NodeState> stateBlockingQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<NodeState> stateBlockingQueue = new LinkedBlockingQueue<>();
 
 
     public void putState(NodeState state) {

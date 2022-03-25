@@ -3,6 +3,7 @@ package raft.transport;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.DefaultChannelPromise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +63,7 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
         ctx.close();
     }
 
+
     public RpcResponse sendRequest(RpcRequest request) throws InterruptedException {
         long l = atomicLong.addAndGet(1);
         RpcInternalWrapper wrapper = new RpcInternalWrapper();
@@ -73,10 +75,10 @@ public class RpcClientHandler extends ChannelInboundHandlerAdapter implements Rp
             logger.error("handler context not init");
             requestFuture.done(null);
         } else {
-            ChannelFuture channelFuture = handlerCtx.writeAndFlush(wrapper);
+            DefaultChannelPromise channelFuture = (DefaultChannelPromise) handlerCtx.writeAndFlush(wrapper);
             channelFuture.await();
             if (!channelFuture.isSuccess()) {
-                logger.error("send request error");
+                logger.error("send request error", channelFuture.cause());
                 requestFuture.done(null);
             }
         }

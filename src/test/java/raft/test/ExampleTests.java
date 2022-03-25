@@ -1,7 +1,6 @@
 package raft.test;
 
 import org.junit.jupiter.api.Test;
-import raft.NodeState;
 import raft.Node;
 import raft.Raft;
 
@@ -16,7 +15,7 @@ public class ExampleTests {
     @Test
     public void TestCluster() throws InterruptedException {
         System.out.println("test raft cluster");
-        String clusterAddr = "127.0.0.1:9000,127.0.0.1:9001,127.0.0.1:9002";
+        String clusterAddr = "127.0.0.1:9000,127.0.0.1:9001,127.0.0.1:9002,127.0.0.1:9003";
         String[] addrList = clusterAddr.split(",");
         List<Raft> nodes = new ArrayList<>();
         for (String addr : addrList) {
@@ -26,7 +25,6 @@ public class ExampleTests {
             raft.start();
             nodes.add(raft);
         }
-        nodes.get(0).setState(NodeState.LEADER);
         for (Raft raft1 : nodes) {
             for (Raft raft2 : nodes) {
                 if (raft1 == raft2) {
@@ -36,7 +34,19 @@ public class ExampleTests {
             }
         }
 
-        nodes.get(0).pushCommand("123123123123");
+        Thread.sleep(5000);
+        String command = "content test";
+        Node leader = nodes.get(0).pushCommand(command);
+        if (leader != null) {
+            for (Raft r : nodes) {
+                if (r.getId().equals(leader.getServerId())) {
+                    r.pushCommand(command);
+                    r.pushCommand(command);
+                    r.pushCommand(command);
+                }
+            }
+        }
+
         new CountDownLatch(1).await();
     }
 

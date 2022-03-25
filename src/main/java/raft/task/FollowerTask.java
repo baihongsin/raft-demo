@@ -50,7 +50,7 @@ public class FollowerTask extends StateTask implements Runnable {
                 }
                 hbTimeout = heartbeatTimeout + Utils.randomTimeout(heartbeatTimeout);
                 delayLock.delay(hbTimeout, TimeUnit.MILLISECONDS);
-                logger.info("raft follower waited for {}ms", hbTimeout);
+//                logger.info("raft follower waited for {}ms", hbTimeout);
 
             }
             // 随机心跳超时变为候选者

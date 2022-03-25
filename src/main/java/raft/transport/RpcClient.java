@@ -68,6 +68,9 @@ public class RpcClient {
 
 
     public RpcClientInvoker select(List<String> serverList) {
+        if (serverList.size() == 0) {
+            return null;
+        }
         int i = random.nextInt(serverList.size());
         String target = serverList.get(i);
         return invokers.get(target);

@@ -22,7 +22,7 @@ public class AppendEntriesRequest {
 
     private Log[] entries;
 
-    private long leaderCommit;
+    private long leaderCommitIndex;
 
     public long getTerm() {
         return term;
@@ -64,11 +64,11 @@ public class AppendEntriesRequest {
         this.entries = entries;
     }
 
-    public long getLeaderCommit() {
-        return leaderCommit;
+    public long getLeaderCommitIndex() {
+        return leaderCommitIndex;
     }
 
-    public void setLeaderCommit(long leaderCommit) {
-        this.leaderCommit = leaderCommit;
+    public void setLeaderCommitIndex(long leaderCommitIndex) {
+        this.leaderCommitIndex = leaderCommitIndex;
     }
 }

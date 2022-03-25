@@ -31,6 +31,10 @@ public class RaftState {
 
     private long lastLogTerm;
 
+    private String lastVoteId;
+
+    private long lastVoteTerm;
+
 
     public String getAddress() {
         return address;
@@ -127,4 +131,23 @@ public class RaftState {
     public void setLastLogTerm(long lastLogTerm) {
         this.lastLogTerm = lastLogTerm;
     }
+
+    public String getLastVoteId() {
+        return lastVoteId;
+    }
+
+    public void setLastVoteId(String lastVoteId) {
+        this.lastVoteId = lastVoteId;
+    }
+
+    public long getLastVoteTerm() {
+        return lastVoteTerm;
+    }
+
+    public void setLastVoteTerm(long lastVoteTerm) {
+        this.lastVoteTerm = lastVoteTerm;
+    }
+
+
+
 }

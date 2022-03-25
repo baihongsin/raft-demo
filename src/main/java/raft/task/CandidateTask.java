@@ -19,8 +19,20 @@ public class CandidateTask extends StateTask implements Runnable {
     private final Raft raft;
 
     private static class VoteInternal {
-        public int voteGranted = 0;
-        public int voteNeeded = 0;
+        /**
+         * 获得的选票数量
+         */
+        public int voteGranted;
+
+        /**
+         * 需要赢得选举的选票数量
+         */
+        public int voteNeeded;
+
+        /**
+         * 投票的节点
+         */
+        public Node voteNode;
     }
 
     public CandidateTask(Raft raft) {
@@ -59,7 +71,7 @@ public class CandidateTask extends StateTask implements Runnable {
         request.setTerm(raft.getCurrentTerm());
         request.setLastLogIndex(raft.getLastLogIndex());
         request.setLastLogTerm(raft.getLastLogTerm());
-        RpcHandler rpcHandler = node.getRpcHandler();
+        RpcHandler rpcHandler = raft.getRpc(node);
         RequestVoteResponse resp = rpcHandler.requestVote(request);
 
         long term = resp.getTerm();
@@ -71,10 +83,11 @@ public class CandidateTask extends StateTask implements Runnable {
         boolean voteGranted = resp.isVoteGranted();
         if (voteGranted) {
             voteInternal.voteGranted ++;
+            logger.debug("get voted from :{}", node);
         }
         if (voteInternal.voteGranted > voteInternal.voteNeeded) {
             raft.setState(NodeState.LEADER);
-            raft.setLeader(node);
+            raft.setLeader(null);
         }
     }
 }

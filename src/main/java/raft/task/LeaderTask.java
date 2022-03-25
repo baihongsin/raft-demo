@@ -32,22 +32,20 @@ public class LeaderTask extends StateTask implements Runnable {
 
     }
 
-    @SuppressWarnings("InfiniteLoopStatement")
     private void stateProcess() {
-        while (true) {
-            if (raft.getState() == NodeState.LEADER) {
-                for (Node node : raft.getNodes()) {
-                    AppendEntriesRequest request = new AppendEntriesRequest();
-                    request.setLeader(raft.getLeader());
-                    request.setTerm(raft.getCurrentTerm());
-                    RpcHandler rpcHandler = node.getRpcHandler();
-                    rpcHandler.appendEntries(request);
-                }
-                try {
-                    delayLock.delay(raft.getConfig().getHeartbeatTimeout(), TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        while (raft.getState() == NodeState.LEADER) {
+            for (Node node : raft.getNodes()) {
+                AppendEntriesRequest request = new AppendEntriesRequest();
+                request.setLeader(new Node(raft.getId(), raft.getAddress()));
+                request.setTerm(raft.getCurrentTerm());
+                request.setLeaderCommitIndex(raft.getIndex());
+                RpcHandler rpcHandler = raft.getRpc(node);
+                rpcHandler.appendEntries(request);
+            }
+            try {
+                delayLock.delay(raft.getConfig().getHeartbeatTimeout(), TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
 
